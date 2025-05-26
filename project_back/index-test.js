@@ -2,16 +2,8 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config({ path: './config.env' });
 
-// Import des middlewares de sécurité
-const { 
-  apiLimiter, 
-  helmetConfig, 
-  logSuspiciousActivity, 
-  sanitizeInput 
-} = require('./middleware/security');
-
-// Import de la configuration Swagger
-const { specs, swaggerUi, swaggerOptions } = require('./config/swagger');
+// Import des middlewares de sécurité (sans helmet pour simplifier)
+const { apiLimiter, sanitizeInput } = require('./middleware/security');
 
 // Import des routes
 const authRoutes = require('./routes/auth');
@@ -22,10 +14,6 @@ const port = process.env.PORT || 3000;
 
 // Trust proxy pour obtenir la vraie IP derrière un reverse proxy
 app.set('trust proxy', 1);
-
-// Middlewares de sécurité
-app.use(helmetConfig);
-app.use(logSuspiciousActivity);
 
 // Configuration CORS
 const corsOptions = {
@@ -45,9 +33,6 @@ app.use(sanitizeInput);
 // Limitation de taux globale
 app.use('/api', apiLimiter);
 
-// Documentation Swagger
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, swaggerOptions));
-
 // Routes principales
 app.use('/api/auth', authRoutes);
 
@@ -55,13 +40,16 @@ app.use('/api/auth', authRoutes);
 app.get('/', (req, res) => {
   res.json({
     success: true,
-    message: 'API de Réservation - Serveur en fonctionnement',
+    message: 'API de Réservation - Serveur en fonctionnement (version test)',
     version: '1.0.0',
-    documentation: '/api-docs',
     endpoints: {
       auth: '/api/auth',
-      swagger: '/api-docs'
-    }
+      register: '/api/auth/register',
+      login: '/api/auth/login',
+      profile: '/api/auth/profile',
+      verify: '/api/auth/verify'
+    },
+    note: 'Version de test sans Swagger - PostgreSQL requis pour les endpoints auth'
   });
 });
 
@@ -76,6 +64,17 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Route de test simple (sans base de données)
+app.get('/test', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Test endpoint fonctionnel',
+    timestamp: new Date().toISOString(),
+    server: 'Express 5.x',
+    node: process.version
+  });
+});
+
 // Middleware pour gérer les routes non trouvées
 app.use('*', (req, res) => {
   res.status(404).json({
@@ -83,7 +82,15 @@ app.use('*', (req, res) => {
     message: 'Route non trouvée',
     path: req.originalUrl,
     method: req.method,
-    suggestion: 'Consultez la documentation à /api-docs'
+    availableRoutes: [
+      'GET /',
+      'GET /health',
+      'GET /test',
+      'POST /api/auth/register',
+      'POST /api/auth/login',
+      'GET /api/auth/profile',
+      'GET /api/auth/verify'
+    ]
   });
 });
 
@@ -108,23 +115,13 @@ app.use((error, req, res, next) => {
   });
 });
 
-// Gestion des erreurs non capturées
-process.on('uncaughtException', (error) => {
-  console.error('❌ Exception non capturée:', error);
-  process.exit(1);
-});
-
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('❌ Promesse rejetée non gérée:', reason);
-  process.exit(1);
-});
-
 // Démarrage du serveur
 app.listen(port, () => {
-  console.log(`🚀 Serveur démarré sur http://localhost:${port}`);
-  console.log(`📚 Documentation Swagger: http://localhost:${port}/api-docs`);
+  console.log(`🚀 Serveur de test démarré sur http://localhost:${port}`);
   console.log(`🏥 Endpoint de santé: http://localhost:${port}/health`);
+  console.log(`🧪 Endpoint de test: http://localhost:${port}/test`);
   console.log(`🌍 Environnement: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`⚠️  Version sans Swagger - PostgreSQL requis pour l'authentification`);
 });
 
-module.exports = app;
+module.exports = app; 
