@@ -13,7 +13,7 @@ class AuthController {
         prenom,
         email,
         password,
-        role
+        role: role || 'client'
       });
 
       // Générer le token JWT
