@@ -36,14 +36,12 @@ const corsOptions = {
     
     // Autoriser les requêtes sans origine (ex: applications mobiles, Postman)
     if (!origin) {
-      console.log('✅ Requête sans origine autorisée');
       return callback(null, true);
     }
     
     // En développement, autoriser tous les localhost
     if (process.env.NODE_ENV === 'development' || !process.env.NODE_ENV) {
       if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
-        console.log(`✅ Origine localhost autorisée: ${origin}`);
         return callback(null, true);
       }
     }
@@ -161,8 +159,6 @@ app.listen(port, () => {
   console.log(`🚀 Serveur démarré sur http://localhost:${port}`);
   console.log(`📚 Documentation Swagger: http://localhost:${port}/api-docs`);
   console.log(`🏥 Endpoint de santé: http://localhost:${port}/health`);
-  console.log(`🌍 Environnement: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🗄️ Base de données: ${process.env.DB_USER}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`);
 });
 
 module.exports = app;
