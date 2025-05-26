@@ -26,7 +26,7 @@ class _ClientReservationsScreenState extends State<ClientReservationsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[900],
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: const Text(
           'Mes Réservations',
