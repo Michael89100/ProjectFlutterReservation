@@ -68,7 +68,7 @@ CREATE TABLE IF NOT EXISTS reservations (
     horaire TIMESTAMP WITH TIME ZONE NOT NULL,
     nombre_couverts INTEGER NOT NULL CHECK (nombre_couverts > 0),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    status VARCHAR(20) NOT NULL DEFAULT 'en attente' CHECK (status IN ('en attente', 'acceptée', 'refusée')),
+    status VARCHAR(20) NOT NULL DEFAULT 'en attente' CHECK (status IN ('en attente', 'acceptée', 'refusée', 'acceptee', 'refusee')),
     date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 

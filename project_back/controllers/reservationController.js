@@ -87,7 +87,7 @@ exports.updateReservation = async (req, res) => {
     // Si serveur : peut modifier le status
     if (req.user.role === 'serveur') {
       const { status } = req.body;
-      if (!['en attente', 'acceptée', 'refusée'].includes(status)) {
+      if (!['en attente', 'acceptée', 'refusée', 'acceptee', 'refusee'].includes(status)) {
         return res.status(400).json({ error: 'Status invalide' });
       }
       await Reservation.updateFields(id, { status });

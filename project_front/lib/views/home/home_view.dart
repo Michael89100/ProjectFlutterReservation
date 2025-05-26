@@ -26,6 +26,7 @@ class _HomeViewState extends State<HomeView> {
     final size = MediaQuery.of(context).size;
     
     return Scaffold(
+      drawer: _buildNavigationDrawer(context),
       body: CustomScrollView(
         slivers: [
           // En-tête avec image de fond
@@ -729,6 +730,260 @@ class _HomeViewState extends State<HomeView> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavigationDrawer(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    return Drawer(
+      child: Consumer<AuthViewModel>(
+        builder: (context, authViewModel, child) {
+          final user = authViewModel.currentUser;
+          
+          return Column(
+            children: [
+              // En-tête du drawer
+              Container(
+                height: 200,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      colorScheme.primary,
+                      colorScheme.primary.withOpacity(0.8),
+                    ],
+                  ),
+                ),
+                child: SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        CircleAvatar(
+                          radius: 30,
+                          backgroundColor: Colors.white,
+                          child: Icon(
+                            Icons.person,
+                            size: 35,
+                            color: colorScheme.primary,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        if (user != null) ...[
+                          Text(
+                            user.nom,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              user.role.toUpperCase(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ] else ...[
+                          const Text(
+                            'Invité',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              
+              // Menu items
+              Expanded(
+                child: ListView(
+                  padding: EdgeInsets.zero,
+                  children: [
+                    _buildDrawerItem(
+                      context,
+                      Icons.home,
+                      'Accueil',
+                      () => Navigator.pop(context),
+                    ),
+                    _buildDrawerItem(
+                      context,
+                      Icons.restaurant_menu,
+                      'Notre carte',
+                      () {
+                        Navigator.pop(context);
+                        Navigator.pushNamed(context, '/menu');
+                      },
+                    ),
+                    
+                    // Section réservée aux serveurs
+                    if (user?.role == 'serveur') ...[
+                      const Divider(),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        child: Text(
+                          'GESTION',
+                          style: TextStyle(
+                            color: colorScheme.primary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      _buildDrawerItem(
+                        context,
+                        Icons.event_seat,
+                        'Gestion des réservations',
+                        () {
+                          Navigator.pop(context);
+                          Navigator.pushNamed(context, '/reservations');
+                        },
+                        isHighlighted: true,
+                      ),
+                    ],
+                    
+                    const Divider(),
+                    
+                    // Section utilisateur
+                    if (user != null) ...[
+                      _buildDrawerItem(
+                        context,
+                        Icons.person,
+                        'Mon profil',
+                        () {
+                          Navigator.pop(context);
+                          // TODO: Naviguer vers la page de profil
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Page de profil à venir')),
+                          );
+                        },
+                      ),
+                      _buildDrawerItem(
+                        context,
+                        Icons.logout,
+                        'Se déconnecter',
+                        () {
+                          Navigator.pop(context);
+                          authViewModel.logout();
+                        },
+                        isDestructive: true,
+                      ),
+                    ] else ...[
+                      _buildDrawerItem(
+                        context,
+                        Icons.login,
+                        'Se connecter',
+                        () {
+                          Navigator.pop(context);
+                          Navigator.pushNamed(context, '/login');
+                        },
+                      ),
+                      _buildDrawerItem(
+                        context,
+                        Icons.person_add,
+                        'S\'inscrire',
+                        () {
+                          Navigator.pop(context);
+                          Navigator.pushNamed(context, '/register');
+                        },
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              
+              // Footer
+              Container(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    const Divider(),
+                    Text(
+                      'Le Petit Bistrot',
+                      style: TextStyle(
+                        color: colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      'Version 1.0.0',
+                      style: TextStyle(
+                        color: colorScheme.onSurfaceVariant,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildDrawerItem(
+    BuildContext context,
+    IconData icon,
+    String title,
+    VoidCallback onTap, {
+    bool isHighlighted = false,
+    bool isDestructive = false,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    Color iconColor = colorScheme.onSurface;
+    Color textColor = colorScheme.onSurface;
+    Color? backgroundColor;
+    
+    if (isHighlighted) {
+      iconColor = colorScheme.primary;
+      textColor = colorScheme.primary;
+      backgroundColor = colorScheme.primaryContainer.withOpacity(0.3);
+    } else if (isDestructive) {
+      iconColor = Colors.red[600]!;
+      textColor = Colors.red[600]!;
+    }
+    
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: ListTile(
+        leading: Icon(icon, color: iconColor),
+        title: Text(
+          title,
+          style: TextStyle(
+            color: textColor,
+            fontWeight: isHighlighted ? FontWeight.w600 : FontWeight.normal,
+          ),
+        ),
+        onTap: onTap,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
         ),
       ),
     );

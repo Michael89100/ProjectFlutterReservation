@@ -8,6 +8,11 @@ class Reservation {
     this.user_id = data.user_id;
     this.status = data.status;
     this.date = data.date;
+    // Informations du client (si disponibles)
+    this.nom = data.nom;
+    this.prenom = data.prenom;
+    this.telephone = data.telephone;
+    this.email = data.email;
   }
 
   static async create({ horaire, nombreCouverts, userId, status = 'en attente' }) {
@@ -22,19 +27,35 @@ class Reservation {
   }
 
   static async findAll() {
-    const query = 'SELECT * FROM reservations ORDER BY date DESC';
+    const query = `
+      SELECT r.*, u.nom, u.prenom, u.telephone, u.email 
+      FROM reservations r 
+      JOIN users u ON r.user_id = u.id 
+      ORDER BY r.date DESC
+    `;
     const result = await pool.query(query);
     return result.rows.map(row => new Reservation(row));
   }
 
   static async findByUser(userId) {
-    const query = 'SELECT * FROM reservations WHERE user_id = $1 ORDER BY date DESC';
+    const query = `
+      SELECT r.*, u.nom, u.prenom, u.telephone, u.email 
+      FROM reservations r 
+      JOIN users u ON r.user_id = u.id 
+      WHERE r.user_id = $1 
+      ORDER BY r.date DESC
+    `;
     const result = await pool.query(query, [userId]);
     return result.rows.map(row => new Reservation(row));
   }
 
   static async findById(id) {
-    const query = 'SELECT * FROM reservations WHERE id = $1';
+    const query = `
+      SELECT r.*, u.nom, u.prenom, u.telephone, u.email 
+      FROM reservations r 
+      JOIN users u ON r.user_id = u.id 
+      WHERE r.id = $1
+    `;
     const result = await pool.query(query, [id]);
     if (result.rows.length === 0) return null;
     return new Reservation(result.rows[0]);
