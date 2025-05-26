@@ -1,4 +1,5 @@
 const pool = require('../config/database');
+const bcrypt = require('bcryptjs');
 
 // Données des plats avec images Pexels libres de droit
 const platsData = [
@@ -95,61 +96,42 @@ const platsData = [
   }
 ];
 
-async function createMenuTable() {
-  const createTableQuery = `
-    CREATE TABLE IF NOT EXISTS menu (
-      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-      nom VARCHAR(100) NOT NULL UNIQUE,
-      description TEXT NOT NULL,
-      prix DECIMAL(10,2) NOT NULL CHECK (prix >= 0),
-      image_url VARCHAR(500) NOT NULL,
-      categorie VARCHAR(20) NOT NULL CHECK (categorie IN ('entree', 'plat_principal', 'dessert', 'boisson')),
-      disponible BOOLEAN DEFAULT true,
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-    );
-  `;
-
-  const createIndexesQuery = `
-    CREATE INDEX IF NOT EXISTS idx_menu_categorie ON menu(categorie);
-    CREATE INDEX IF NOT EXISTS idx_menu_disponible ON menu(disponible);
-    CREATE INDEX IF NOT EXISTS idx_menu_nom ON menu(nom);
-  `;
-
-  const createTriggerQuery = `
-    CREATE TRIGGER update_menu_updated_at 
-      BEFORE UPDATE ON menu 
-      FOR EACH ROW 
-      EXECUTE FUNCTION update_updated_at_column();
-  `;
-
-  try {
-    await pool.query(createTableQuery);
-    console.log('✅ Table menu créée avec succès');
-
-    await pool.query(createIndexesQuery);
-    console.log('✅ Index créés avec succès');
-
-    // Vérifier si le trigger existe déjà
-    const triggerExists = await pool.query(`
-      SELECT 1 FROM pg_trigger WHERE tgname = 'update_menu_updated_at'
-    `);
-
-    if (triggerExists.rows.length === 0) {
-      await pool.query(createTriggerQuery);
-      console.log('✅ Trigger créé avec succès');
-    } else {
-      console.log('ℹ️  Trigger déjà existant');
-    }
-
-  } catch (error) {
-    console.error('❌ Erreur lors de la création de la table:', error);
-    throw error;
+// Données des utilisateurs par défaut
+const usersData = [
+  {
+    nom: 'Martin',
+    prenom: 'Jean',
+    email: 'client@restaurant.com',
+    password: 'Client123!',
+    telephone: '0123456789',
+    role: 'client'
+  },
+  {
+    nom: 'Dubois',
+    prenom: 'Marie',
+    email: 'serveur@restaurant.com',
+    password: 'Serveur123!',
+    telephone: '0987654321',
+    role: 'serveur'
   }
-}
+];
 
 async function populateMenu() {
   try {
+    // Vérifier si la table menu existe
+    const tableExists = await pool.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'menu'
+      );
+    `);
+
+    if (!tableExists.rows[0].exists) {
+      console.log('❌ La table menu n\'existe pas. Veuillez d\'abord exécuter le script init-db.sql');
+      return;
+    }
+
     // Vérifier si des plats existent déjà
     const existingPlats = await pool.query('SELECT COUNT(*) FROM menu');
     const count = parseInt(existingPlats.rows[0].count);
@@ -229,20 +211,121 @@ async function populateMenu() {
   }
 }
 
+async function populateUsers() {
+  try {
+    // Vérifier si la table users existe
+    const tableExists = await pool.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'users'
+      );
+    `);
+
+    if (!tableExists.rows[0].exists) {
+      console.log('❌ La table users n\'existe pas. Veuillez d\'abord exécuter le script init-db.sql');
+      return;
+    }
+
+    // Vérifier si des utilisateurs existent déjà
+    const existingUsers = await pool.query('SELECT COUNT(*) FROM users');
+    const count = parseInt(existingUsers.rows[0].count);
+
+    if (count > 0) {
+      console.log(`ℹ️  ${count} utilisateurs déjà présents dans la base de données`);
+      const response = await new Promise((resolve) => {
+        const readline = require('readline');
+        const rl = readline.createInterface({
+          input: process.stdin,
+          output: process.stdout
+        });
+
+        rl.question('Voulez-vous supprimer les utilisateurs existants et les remplacer ? (y/N): ', (answer) => {
+          rl.close();
+          resolve(answer.toLowerCase() === 'y' || answer.toLowerCase() === 'yes');
+        });
+      });
+
+      if (response) {
+        await pool.query('DELETE FROM users');
+        console.log('🗑️  Utilisateurs existants supprimés');
+      } else {
+        console.log('⏭️  Conservation des utilisateurs existants');
+        return;
+      }
+    }
+
+    // Insérer les nouveaux utilisateurs
+    const insertQuery = `
+      INSERT INTO users (nom, prenom, email, password, telephone, role)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING id, email, role
+    `;
+
+    let insertedCount = 0;
+    for (const user of usersData) {
+      try {
+        // Hasher le mot de passe
+        const hashedPassword = await bcrypt.hash(user.password, 12);
+
+        const result = await pool.query(insertQuery, [
+          user.nom,
+          user.prenom,
+          user.email,
+          hashedPassword,
+          user.telephone,
+          user.role
+        ]);
+
+        console.log(`✅ Utilisateur ajouté: ${result.rows[0].email} (${result.rows[0].role})`);
+        insertedCount++;
+      } catch (error) {
+        if (error.code === '23505') { // Contrainte unique violée
+          console.log(`⚠️  Utilisateur déjà existant: ${user.email}`);
+        } else {
+          console.error(`❌ Erreur lors de l'insertion de ${user.email}:`, error.message);
+        }
+      }
+    }
+
+    console.log(`\n🎉 ${insertedCount} utilisateurs ajoutés avec succès !`);
+
+    // Afficher un résumé par rôle
+    const summary = await pool.query(`
+      SELECT role, COUNT(*) as count 
+      FROM users 
+      GROUP BY role 
+      ORDER BY role
+    `);
+
+    console.log('\n👥 Résumé des utilisateurs par rôle:');
+    summary.rows.forEach(row => {
+      console.log(`   ${row.role}: ${row.count} utilisateur(s)`);
+    });
+
+    // Afficher les informations de connexion
+    console.log('\n🔑 Informations de connexion:');
+    console.log('   Client: client@restaurant.com / client123');
+    console.log('   Serveur: serveur@restaurant.com / serveur123');
+
+  } catch (error) {
+    console.error('❌ Erreur lors du peuplement des utilisateurs:', error);
+    throw error;
+  }
+}
+
 async function main() {
   try {
-    console.log('🚀 Initialisation du menu...\n');
-
-    // Créer la table et les index
-    await createMenuTable();
+    console.log('🚀 Peuplement de la base de données...\n');
 
     // Peupler avec les données
+    await populateUsers();
     await populateMenu();
 
-    console.log('\n✅ Initialisation du menu terminée avec succès !');
+    console.log('\n✅ Peuplement de la base de données terminé avec succès !');
     
   } catch (error) {
-    console.error('\n❌ Erreur lors de l\'initialisation:', error);
+    console.error('\n❌ Erreur lors du peuplement:', error);
     process.exit(1);
   } finally {
     await pool.end();
@@ -254,4 +337,4 @@ if (require.main === module) {
   main();
 }
 
-module.exports = { createMenuTable, populateMenu }; 
+module.exports = { populateMenu, populateUsers }; 
