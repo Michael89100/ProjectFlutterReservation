@@ -64,13 +64,14 @@ class AuthService {
     }
   }
 
-  Future<AuthResponse> register(String nom, String prenom, String email, String password) async {
+  Future<AuthResponse> register(String nom, String prenom, String email, String password, String telephone) async {
     try {
       final request = RegisterRequest(
         nom: nom,
         prenom: prenom,
         email: email,
         password: password,
+        telephone: telephone,
         role: 'client',
       );
       
