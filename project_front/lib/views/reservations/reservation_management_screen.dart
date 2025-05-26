@@ -95,6 +95,7 @@ class _ReservationManagementScreenState extends State<ReservationManagementScree
                   )
                 else if (viewModel.reservations.isEmpty)
                   SliverFillRemaining(
+                    hasScrollBody: false,
                     child: _buildEmptyState(viewModel),
                   )
                 else
@@ -206,20 +207,23 @@ class _ReservationManagementScreenState extends State<ReservationManagementScree
         icon = Icons.event_busy;
     }
 
-    return Center(
+    return SingleChildScrollView(
       child: Container(
-        margin: const EdgeInsets.all(24),
+        width: double.infinity,
+        padding: const EdgeInsets.all(24),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            const SizedBox(height: 40), // Espace en haut
             Icon(
               icon,
-              size: 80,
+              size: 64,
               color: Colors.grey[400],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
             Text(
               message,
+              textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w500,
@@ -229,6 +233,7 @@ class _ReservationManagementScreenState extends State<ReservationManagementScree
             const SizedBox(height: 8),
             Text(
               'Les nouvelles réservations apparaîtront ici',
+              textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey[500],
@@ -248,6 +253,7 @@ class _ReservationManagementScreenState extends State<ReservationManagementScree
                 ),
               ),
             ),
+            const SizedBox(height: 40), // Espace en bas pour éviter le débordement
           ],
         ),
       ),
