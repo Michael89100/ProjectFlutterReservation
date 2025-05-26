@@ -62,7 +62,22 @@ CREATE TRIGGER update_menu_updated_at
     FOR EACH ROW 
     EXECUTE FUNCTION update_updated_at_column();
 
+-- Table des réservations
+CREATE TABLE IF NOT EXISTS reservations (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    horaire TIMESTAMP WITH TIME ZONE NOT NULL,
+    nombre_couverts INTEGER NOT NULL CHECK (nombre_couverts > 0),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    status VARCHAR(20) NOT NULL DEFAULT 'en attente' CHECK (status IN ('en attente', 'acceptée', 'refusée', 'acceptee', 'refusee')),
+    date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Index pour les réservations
+CREATE INDEX IF NOT EXISTS idx_reservations_user_id ON reservations(user_id);
+CREATE INDEX IF NOT EXISTS idx_reservations_status ON reservations(status);
+CREATE INDEX IF NOT EXISTS idx_reservations_horaire ON reservations(horaire);
+
 -- Données de test (optionnel)
 -- INSERT INTO users (nom, prenom, email, password, role) VALUES 
 -- ('Doe', 'John', 'john.doe@example.com', '$2a$10$example_hash', 'client'),
--- ('Smith', 'Jane', 'jane.smith@example.com', '$2a$10$example_hash', 'serveur'); 
+-- ('Smith', 'Jane', 'jane.smith@example.com', '$2a$10$example_hash', 'serveur');
