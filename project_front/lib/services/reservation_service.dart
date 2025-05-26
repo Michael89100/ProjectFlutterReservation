@@ -3,13 +3,15 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../models/reservation.dart';
 
-class ReservationService {
+class ReservationService implements Exception{
   static const String baseUrl = 'http://localhost:3000/api';
   
   static ReservationService? _instance;
   static ReservationService get instance => _instance ??= ReservationService._();
   
   ReservationService._();
+  // Ajout d'un constructeur par défaut pour permettre l'instanciation avec ReservationService()
+  ReservationService();
 
   Map<String, String> get _headers => {
     'Content-Type': 'application/json',
@@ -153,24 +155,6 @@ class ReservationService {
   Future<Reservation> refuseReservation(String token, String reservationId, {String? commentaire}) async {
     return updateReservationStatus(token, reservationId, 'refusee', commentaire: commentaire);
   }
-}
-
-class ReservationException implements Exception {
-  final String message;
-  final int statusCode;
-
-  ReservationException({
-    required this.message,
-    required this.statusCode,
-  });
-
-  @override
-  String toString() => 'ReservationException: $message (Code: $statusCode)';
-} 
-import 'package:http/http.dart' as http;
-
-class ReservationService {
-  static const String baseUrl = 'http://localhost:3000/api';
 
   Future<bool> createReservation({
     String? token,
@@ -206,16 +190,16 @@ class ReservationService {
         'password': 'Temp${DateTime.now().millisecondsSinceEpoch}', // mot de passe temporaire
       };
     }
-    http.get(
-      Uri.parse('$baseUrl/available-slots'),
-      headers: headers,
-    );
+    print('DEBUG ReservationService: url=$url');
+    print('DEBUG ReservationService: headers=' + headers.toString());
+    print('DEBUG ReservationService: body=' + body.toString());
     final response = await http.post(
       url,
       headers: headers,
       body: jsonEncode(body),
     );
-
+    print('DEBUG ReservationService: statusCode=${response.statusCode}');
+    print('DEBUG ReservationService: responseBody=${response.body}');
     if (response.statusCode == 201) {
       return true;
     } else {
@@ -223,4 +207,17 @@ class ReservationService {
       return false;
     }
   }
+}
+
+class ReservationException implements Exception {
+  final String message;
+  final int statusCode;
+
+  ReservationException({
+    required this.message,
+    required this.statusCode,
+  });
+
+  @override
+  String toString() => 'ReservationException: $message (Code: $statusCode)';
 }
