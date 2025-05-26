@@ -2,6 +2,11 @@ const express = require('express');
 const router = express.Router();
 const MenuController = require('../controllers/menuController');
 const { authenticateToken } = require('../middleware/auth');
+const { 
+  validateCreatePlat, 
+  validateUpdateAvailability, 
+  validateCategoryParam 
+} = require('../middleware/validation');
 
 /**
  * @swagger
@@ -159,7 +164,7 @@ router.get('/', MenuController.getMenu);
  *       500:
  *         description: Erreur interne du serveur
  */
-router.get('/category/:categorie', MenuController.getMenuByCategory);
+router.get('/category/:categorie', validateCategoryParam, MenuController.getMenuByCategory);
 
 /**
  * @swagger
@@ -248,7 +253,7 @@ router.get('/admin/all', authenticateToken, MenuController.getMenuAdmin);
  *       500:
  *         description: Erreur interne du serveur
  */
-router.post('/', authenticateToken, MenuController.createPlat);
+router.post('/', authenticateToken, validateCreatePlat, MenuController.createPlat);
 
 /**
  * @swagger
@@ -296,6 +301,6 @@ router.post('/', authenticateToken, MenuController.createPlat);
  *       500:
  *         description: Erreur interne du serveur
  */
-router.patch('/:id/availability', authenticateToken, MenuController.updatePlatAvailability);
+router.patch('/:id/availability', authenticateToken, validateUpdateAvailability, MenuController.updatePlatAvailability);
 
 module.exports = router; 

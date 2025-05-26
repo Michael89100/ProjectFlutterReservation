@@ -28,11 +28,20 @@ const options = {
       {
         name: 'Authentification',
         description: 'Endpoints pour l\'authentification des utilisateurs'
+      },
+      {
+        name: 'Menu',
+        description: 'Endpoints publics pour consulter le menu du restaurant'
+      },
+      {
+        name: 'Menu - Administration',
+        description: 'Endpoints d\'administration pour gérer le menu (authentification requise)'
       }
     ]
   },
   apis: [
-    path.join(__dirname, '../routes/auth.js')
+    path.join(__dirname, '../routes/auth.js'),
+    path.join(__dirname, '../routes/menu.js')
   ]
 };
 
