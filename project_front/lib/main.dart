@@ -6,6 +6,7 @@ import 'views/auth/login_view.dart';
 import 'views/auth/register_view.dart';
 import 'views/home/home_view.dart';
 import 'views/menu/menu_view.dart';
+import 'views/reservations/protected_reservation_management_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -47,12 +48,13 @@ class MyApp extends StatelessWidget {
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           ),
         ),
-        home: const AuthWrapper(),
+        home: const HomeView(),
         routes: {
           '/login': (context) => const LoginView(),
           '/register': (context) => const RegisterView(),
           '/home': (context) => const HomeView(),
           '/menu': (context) => const MenuView(),
+          '/reservations': (context) => const ProtectedReservationManagementScreen(),
         },
       ),
     );
