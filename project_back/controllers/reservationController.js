@@ -1,25 +1,28 @@
 const Reservation = require('../models/Reservation');
 const User = require('../models/User');
+const { sendMail } = require('../config/mailer');
 
 // Créer une réservation
 exports.createReservation = async (req, res) => {
   try {
     let userId;
     let user;
+    let createdUser = false;
     // Si on reçoit un objet user complet, on crée le compte
     if (req.body.user && req.body.user.email) {
-      // Si toutes les infos user sont envoyées, on ne vérifie pas le token
       const { nom, prenom, email, telephone, password, role } = req.body.user;
       user = await User.create({ nom, prenom, email, telephone, password, role: role || 'client' });
       userId = user.id;
+      createdUser = true;
     } else if (req.body.userId) {
-      // Si userId fourni, on attend un token (authentifié)
       if (!req.user || req.user.id !== req.body.userId) {
         return res.status(401).json({ error: 'Token invalide ou manquant pour ce client' });
       }
       userId = req.body.userId;
+      user = await User.findById(userId);
     } else if (req.user && req.user.id) {
       userId = req.user.id;
+      user = await User.findById(userId);
     } else {
       return res.status(400).json({ error: 'Aucun utilisateur fourni' });
     }
@@ -29,6 +32,20 @@ exports.createReservation = async (req, res) => {
       nombreCouverts,
       userId
     });
+    // Envoi des emails
+    try {
+      const adminMail = 'kylian.deley@gmail.com';
+      const clientMail = user.email;
+      const subject = 'Nouvelle réservation - Le Petit Bistrot';
+      const text = `Bonjour ${user.prenom || user.nom},\nVotre réservation pour ${nombreCouverts} couvert(s) le ${horaire} a bien été enregistrée.\nMerci et à bientôt !`;
+      const html = `<p>Bonjour ${user.prenom || user.nom},<br>Votre réservation pour <b>${nombreCouverts} couvert(s)</b> le <b>${horaire}</b> a bien été enregistrée.<br>Merci et à bientôt !</p>`;
+      // Mail client
+      await sendMail({ to: clientMail, subject, text, html });
+      // Mail admin
+      await sendMail({ to: adminMail, subject: 'Nouvelle réservation reçue', text: `Nouvelle réservation de ${user.nom} ${user.prenom || ''} (${user.email}) pour ${nombreCouverts} couvert(s) le ${horaire}.`, html: `<b>Nouvelle réservation de ${user.nom} ${user.prenom || ''} (${user.email})</b><br>Pour ${nombreCouverts} couvert(s) le <b>${horaire}</b>.` });
+    } catch (mailErr) {
+      console.error('Erreur lors de l\'envoi du mail :', mailErr);
+    }
     res.status(201).json(reservation);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -127,29 +144,10 @@ exports.getAvailableSlots = async (req, res) => {
     slots.push('13:30');
     addSlots(18, 21); // 18:00 à 21:30
     slots.push('21:30');
-
-    // Récupérer toutes les réservations du jour
-    const reservationsQuery = `SELECT horaire, nombre_couverts FROM reservations WHERE horaire::date = $1`;
-    const reservationsResult = await require('../config/database').query(reservationsQuery, [date]);
-    // Pour chaque créneau, calculer le nombre de places restantes
-    const slotPlaces = {};
-    slots.forEach(slot => slotPlaces[slot] = 20);
-    for (const row of reservationsResult.rows) {
-      const resTime = new Date(row.horaire);
-      const resHour = resTime.getHours();
-      const resMin = resTime.getMinutes();
-      // Créneau de la réservation (ex: 12:00)
-      const resSlot = `${resHour.toString().padStart(2, '0')}:${resMin.toString().padStart(2, '0')}`;
-      // Bloquer le créneau de la réservation et le suivant (1h)
-      const slotIdx = slots.indexOf(resSlot);
-      for (let i = slotIdx; i <= slotIdx + 1 && i < slots.length; i++) {
-        if (i >= 0) slotPlaces[slots[i]] -= row.nombre_couverts;
-      }
-    }
-    // Retourner les créneaux avec places dispo > 0
+    // Tous les créneaux sont disponibles à 20 places
     const available = slots.map(slot => ({
       heure: slot,
-      places_disponibles: slotPlaces[slot] > 0 ? slotPlaces[slot] : 0
+      places_disponibles: 20
     }));
     res.json({ slots: available });
   } catch (err) {

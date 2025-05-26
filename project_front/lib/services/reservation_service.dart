@@ -207,6 +207,20 @@ class ReservationService implements Exception{
       return false;
     }
   }
+
+  // Récupère les créneaux disponibles pour une date donnée (format YYYY-MM-DD)
+  Future<List<Map<String, dynamic>>> getAvailableSlots(DateTime date) async {
+    final String dateStr = date.toIso8601String().split('T')[0];
+    final url = Uri.parse('$baseUrl/reservations/available-slots?date=$dateStr');
+    final response = await http.get(url, headers: _headers);
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final slots = (data['slots'] as List<dynamic>?) ?? [];
+      return slots.map((e) => Map<String, dynamic>.from(e)).toList();
+    } else {
+      throw Exception('Erreur lors de la récupération des créneaux');
+    }
+  }
 }
 
 class ReservationException implements Exception {
