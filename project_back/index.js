@@ -16,6 +16,7 @@ const { specs, swaggerUi, swaggerOptions } = require('./config/swagger');
 // Import des routes
 const authRoutes = require('./routes/auth');
 const menuRoutes = require('./routes/menu');
+const reservationRoutes = require('./routes/reservation');
 
 // Initialisation de l'application Express
 const app = express();
@@ -83,6 +84,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, swaggerOptions));
 // Routes principales
 app.use('/api/auth', authRoutes);
 app.use('/api/menu', menuRoutes);
+app.use('/api/reservations', reservationRoutes);
 
 // Route de base
 app.get('/', (req, res) => {
@@ -94,6 +96,7 @@ app.get('/', (req, res) => {
     endpoints: {
       auth: '/api/auth',
       menu: '/api/menu',
+      reservations: '/api/reservations',
       swagger: '/api-docs'
     }
   });

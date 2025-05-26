@@ -36,12 +36,17 @@ const options = {
       {
         name: 'Menu - Administration',
         description: 'Endpoints d\'administration pour gérer le menu (authentification requise)'
+      },
+      {
+        name: 'Réservations',
+        description: 'Endpoints pour la gestion des réservations'
       }
     ]
   },
   apis: [
     path.join(__dirname, '../routes/auth.js'),
-    path.join(__dirname, '../routes/menu.js')
+    path.join(__dirname, '../routes/menu.js'),
+    path.join(__dirname, '../routes/reservation.js')
   ]
 };
 
@@ -62,4 +67,4 @@ module.exports = {
   specs,
   swaggerUi,
   swaggerOptions
-}; 
+};
