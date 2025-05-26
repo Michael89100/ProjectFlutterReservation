@@ -47,7 +47,7 @@ class MyApp extends StatelessWidget {
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           ),
         ),
-        home: const AuthWrapper(),
+        home: const HomeView(),
         routes: {
           '/login': (context) => const LoginView(),
           '/register': (context) => const RegisterView(),
