@@ -43,7 +43,18 @@ const { authenticateToken } = require('../middleware/auth');
  *       401:
  *         description: Non authentifié
  */
-router.post('/', authenticateToken, reservationController.createReservation);
+// Route POST /api/reservations :
+// - Si user connecté (token présent), authentification requise
+// - Si user non connecté (création de compte), pas d'authentification requise
+router.post('/', (req, res, next) => {
+  // Si le body contient un user complet, on ne vérifie pas le token
+  if (req.body.user && req.body.user.email) {
+    return reservationController.createReservation(req, res);
+  } else {
+    // Sinon, authentification requise
+    authenticateToken(req, res, () => reservationController.createReservation(req, res));
+  }
+});
 
 /**
  * @swagger
@@ -133,5 +144,43 @@ router.delete('/:id', authenticateToken, reservationController.deleteReservation
  *         description: Réservation non trouvée
  */
 router.patch('/:id', authenticateToken, reservationController.updateReservation);
+
+/**
+ * @swagger
+ * /api/reservations/available-slots:
+ *   get:
+ *     summary: Obtenir les créneaux horaires disponibles pour une date donnée
+ *     tags: [Réservations]
+ *     parameters:
+ *       - in: query
+ *         name: date
+ *         schema:
+ *           type: string
+ *           format: date
+ *         required: true
+ *         description: Date au format YYYY-MM-DD
+ *     responses:
+ *       200:
+ *         description: Liste des créneaux disponibles
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 slots:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       heure:
+ *                         type: string
+ *                         example: "12:00"
+ *                       places_disponibles:
+ *                         type: integer
+ *                         example: 8
+ *       400:
+ *         description: Date manquante ou invalide
+ */
+router.get('/available-slots', reservationController.getAvailableSlots);
 
 module.exports = router;

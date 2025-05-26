@@ -106,7 +106,7 @@ CREATE DATABASE reservation_db;
 psql -U postgres -d reservation_db -f scripts/init-db.sql
 
 # Depuis le dossier project_back pour mac/linux
-psql -d reservation_db -f scripts/init-db.sql
+ 
 ```
 
 Ou manuellement :

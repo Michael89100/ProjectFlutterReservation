@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/menu_viewmodel.dart';
 import '../components/menu_card.dart';
+import '../../services/reservation_service.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -12,6 +14,9 @@ class HomeView extends StatefulWidget {
 }
 
 class _HomeViewState extends State<HomeView> {
+  final LatLng _restaurantPosition = const LatLng(48.8566, 2.3522);
+  GoogleMapController? _mapController;
+
   @override
   void initState() {
     super.initState();
@@ -215,6 +220,49 @@ class _HomeViewState extends State<HomeView> {
                   ),
                   const SizedBox(height: 20),
 
+                  // Section Carte
+                  Text(
+                    'Notre Restaurant',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    height: 200,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: colorScheme.primary.withOpacity(0.3),
+                        width: 2,
+                      ),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(18),
+                      child: GoogleMap(
+                        initialCameraPosition: CameraPosition(
+                          target: _restaurantPosition,
+                          zoom: 15,
+                        ),
+                        onMapCreated: (GoogleMapController controller) {
+                          _mapController = controller;
+                        },
+                        markers: {
+                          Marker(
+                            markerId: const MarkerId('restaurant'),
+                            position: _restaurantPosition,
+                            infoWindow: const InfoWindow(
+                              title: 'Le Petit Bistrot',
+                              snippet: 'Cuisine française authentique',
+                            ),
+                          ),
+                        },
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
                   // Section Plats du jour
                   Text(
                     'Nos Plats du Jour',
@@ -304,17 +352,11 @@ class _HomeViewState extends State<HomeView> {
                           const SizedBox(height: 12),
                           _buildActionButton(
                             context,
-                            authViewModel.isAuthenticated 
-                                ? 'Réserver une table' 
-                                : 'Se connecter pour réserver',
+                            'Réserver une table',
                             Icons.event_seat,
                             colorScheme.secondary,
                             () {
-                              if (authViewModel.isAuthenticated) {
-                                _showReservationForm(context);
-                              } else {
-                                Navigator.of(context).pushNamed('/login');
-                              }
+                              _showReservationForm(context);
                             },
                           ),
                         ],
@@ -515,8 +557,19 @@ class _HomeViewState extends State<HomeView> {
   void _showReservationForm(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     DateTime selectedDate = DateTime.now();
-    TimeOfDay selectedTime = TimeOfDay.now();
+    String? selectedSlot; // Ajout pour le créneau sélectionné
     int numberOfGuests = 2;
+    final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
+    // Champs pour non connecté
+    final TextEditingController nomController = TextEditingController();
+    final TextEditingController prenomController = TextEditingController();
+    final TextEditingController emailController = TextEditingController();
+    final TextEditingController telephoneController = TextEditingController();
+
+    Future<List<Map<String, dynamic>>> _fetchAvailableSlots(DateTime date) async {
+      final response = await ReservationService.instance.getAvailableSlots(date);
+      return response;
+    }
 
     showModalBottomSheet(
       context: context,
@@ -631,7 +684,10 @@ class _HomeViewState extends State<HomeView> {
                             },
                           );
                           if (picked != null) {
-                            setState(() => selectedDate = picked);
+                            setState(() {
+                              selectedDate = picked;
+                              selectedSlot = null; // Réinitialise le créneau sélectionné
+                            });
                           }
                         },
                         child: Container(
@@ -657,65 +713,147 @@ class _HomeViewState extends State<HomeView> {
                       ),
                       const SizedBox(height: 24),
 
-                      // Heure
+                      // Heure (créneau)
                       Text(
-                        'Heure',
+                        'Créneau',
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       const SizedBox(height: 12),
-                      InkWell(
-                        onTap: () async {
-                          final TimeOfDay? picked = await showTimePicker(
-                            context: context,
-                            initialTime: selectedTime,
-                            builder: (context, child) {
-                              return Theme(
-                                data: Theme.of(context).copyWith(
-                                  colorScheme: colorScheme,
-                                ),
-                                child: child!,
-                              );
-                            },
-                          );
-                          if (picked != null) {
-                            setState(() => selectedTime = picked);
+                      FutureBuilder<List<Map<String, dynamic>>>(
+                        future: _fetchAvailableSlots(selectedDate),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                            return const Center(child: CircularProgressIndicator());
                           }
+                          if (snapshot.hasError) {
+                            return Text('Erreur lors du chargement des créneaux');
+                          }
+                          final slots = snapshot.data ?? [];
+                          if (slots.isEmpty) {
+                            return Text('Aucun créneau disponible');
+                          }
+                          // Correction : filtrer les doublons d'heures
+                          final uniqueSlots = <String, Map<String, dynamic>>{};
+                          for (final slot in slots) {
+                            final heure = slot['heure'] as String;
+                            if (!uniqueSlots.containsKey(heure)) {
+                              uniqueSlots[heure] = slot;
+                            }
+                          }
+                          return DropdownButtonFormField<String>(
+                            value: selectedSlot,
+                            decoration: InputDecoration(
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              filled: true,
+                              fillColor: colorScheme.surfaceVariant,
+                            ),
+                            items: uniqueSlots.values.map((slot) {
+                              final heure = slot['heure'] as String;
+                              final places = slot['places_disponibles'] ?? 20;
+                              return DropdownMenuItem<String>(
+                                value: heure,
+                                child: Text('$heure'),
+                              );
+                            }).toList(),
+                            onChanged: (value) {
+                              setState(() => selectedSlot = value);
+                            },
+                            hint: const Text('Sélectionnez un créneau'),
+                          );
                         },
-                        child: Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: colorScheme.surfaceVariant,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                selectedTime.format(context),
-                                style: Theme.of(context).textTheme.titleMedium,
-                              ),
-                              Icon(
-                                Icons.access_time,
-                                color: colorScheme.primary,
-                              ),
-                            ],
-                          ),
-                        ),
                       ),
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 24),
+
+                      // Si non connecté, afficher les champs d'identité
+                      if (!authViewModel.isAuthenticated) ...[
+                        Text('Nom', style: Theme.of(context).textTheme.titleMedium),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: nomController,
+                          decoration: const InputDecoration(hintText: 'Votre nom'),
+                        ),
+                        const SizedBox(height: 12),
+                        Text('Prénom', style: Theme.of(context).textTheme.titleMedium),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: prenomController,
+                          decoration: const InputDecoration(hintText: 'Votre prénom'),
+                        ),
+                        const SizedBox(height: 12),
+                        Text('Email', style: Theme.of(context).textTheme.titleMedium),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: emailController,
+                          decoration: const InputDecoration(hintText: 'Votre email'),
+                          keyboardType: TextInputType.emailAddress,
+                        ),
+                        const SizedBox(height: 12),
+                        Text('Téléphone', style: Theme.of(context).textTheme.titleMedium),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: telephoneController,
+                          decoration: const InputDecoration(hintText: 'Votre téléphone'),
+                          keyboardType: TextInputType.phone,
+                        ),
+                        const SizedBox(height: 24),
+                      ],
 
                       // Bouton de confirmation
                       FilledButton.icon(
-                        onPressed: () {
-                          // TODO: Implémenter la logique de réservation
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Réservation enregistrée !'),
-                            ),
-                          );
-                          Navigator.pop(context);
+                        onPressed: () async {
+                          if (selectedSlot == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Veuillez sélectionner un créneau.'), backgroundColor: Colors.red),
+                            );
+                            return;
+                          }
+                          final String heure = selectedSlot!;
+                          bool reservationSuccess = false;
+                          if (authViewModel.isAuthenticated) {
+                            reservationSuccess = await ReservationService().createReservation(
+                              token: authViewModel.token,
+                              userId: authViewModel.currentUser?.id,
+                              nombreCouverts: numberOfGuests,
+                              date: selectedDate,
+                              heure: heure,
+                            );
+                          } else {
+                            if (nomController.text.isEmpty || prenomController.text.isEmpty || emailController.text.isEmpty || telephoneController.text.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Veuillez remplir tous les champs.'), backgroundColor: Colors.red),
+                              );
+                              return;
+                            }
+                            reservationSuccess = await ReservationService().createReservation(
+                              nombreCouverts: numberOfGuests,
+                              date: selectedDate,
+                              heure: heure,
+                              nom: nomController.text,
+                              prenom: prenomController.text,
+                              email: emailController.text,
+                              telephone: telephoneController.text,
+                            );
+                          }
+                          if (reservationSuccess) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Réservation enregistrée !'),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                            Navigator.pop(context);
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Erreur lors de la réservation'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
                         },
                         icon: const Icon(Icons.check),
                         label: const Text('Confirmer la réservation'),
