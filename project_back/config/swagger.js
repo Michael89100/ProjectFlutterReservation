@@ -28,11 +28,16 @@ const options = {
       {
         name: 'Authentification',
         description: 'Endpoints pour l\'authentification des utilisateurs'
+      },
+      {
+        name: 'Réservations',
+        description: 'Endpoints pour la gestion des réservations'
       }
     ]
   },
   apis: [
-    path.join(__dirname, '../routes/auth.js')
+    path.join(__dirname, '../routes/auth.js'),
+    path.join(__dirname, '../routes/reservation.js')
   ]
 };
 
@@ -53,4 +58,4 @@ module.exports = {
   specs,
   swaggerUi,
   swaggerOptions
-}; 
+};
