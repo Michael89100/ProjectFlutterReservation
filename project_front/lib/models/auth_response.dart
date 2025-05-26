@@ -62,6 +62,7 @@ class RegisterRequest {
   final String prenom;
   final String email;
   final String password;
+  final String telephone;
   final String role;
 
   RegisterRequest({
@@ -69,6 +70,7 @@ class RegisterRequest {
     required this.prenom,
     required this.email,
     required this.password,
+    required this.telephone,
     this.role = 'client',
   });
 
@@ -78,6 +80,7 @@ class RegisterRequest {
       'prenom': prenom,
       'email': email,
       'password': password,
+      'telephone': telephone,
       'role': role,
     };
   }

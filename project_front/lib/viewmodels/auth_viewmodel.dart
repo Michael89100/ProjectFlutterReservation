@@ -95,12 +95,12 @@ class AuthViewModel extends ChangeNotifier {
   }
 
   // Inscription
-  Future<bool> register(String nom, String prenom, String email, String password) async {
+  Future<bool> register(String nom, String prenom, String email, String password, String telephone) async {
     _setLoading(true);
     _clearError();
 
     try {
-      final authResponse = await _authService.register(nom, prenom, email, password);
+      final authResponse = await _authService.register(nom, prenom, email, password, telephone);
       
       // Ne pas connecter automatiquement après l'inscription
       // L'utilisateur devra se connecter manuellement
