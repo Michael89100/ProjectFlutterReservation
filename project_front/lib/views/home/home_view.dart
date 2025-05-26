@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/menu_viewmodel.dart';
 import '../components/menu_card.dart';
@@ -13,6 +14,9 @@ class HomeView extends StatefulWidget {
 }
 
 class _HomeViewState extends State<HomeView> {
+  final LatLng _restaurantPosition = const LatLng(48.8566, 2.3522);
+  GoogleMapController? _mapController;
+
   @override
   void initState() {
     super.initState();
@@ -210,6 +214,49 @@ class _HomeViewState extends State<HomeView> {
                           ),
                         ),
                       ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Section Carte
+                  Text(
+                    'Notre Restaurant',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    height: 200,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: colorScheme.primary.withOpacity(0.3),
+                        width: 2,
+                      ),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(18),
+                      child: GoogleMap(
+                        initialCameraPosition: CameraPosition(
+                          target: _restaurantPosition,
+                          zoom: 15,
+                        ),
+                        onMapCreated: (GoogleMapController controller) {
+                          _mapController = controller;
+                        },
+                        markers: {
+                          Marker(
+                            markerId: const MarkerId('restaurant'),
+                            position: _restaurantPosition,
+                            infoWindow: const InfoWindow(
+                              title: 'Le Petit Bistrot',
+                              snippet: 'Cuisine française authentique',
+                            ),
+                          ),
+                        },
+                      ),
                     ),
                   ),
                   const SizedBox(height: 20),
