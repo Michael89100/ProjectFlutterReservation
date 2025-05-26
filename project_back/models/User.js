@@ -16,7 +16,7 @@ class User {
 
   // Créer un nouvel utilisateur
   static async create(userData) {
-    const { nom, prenom, email, password, role, telephone } = userData;
+    const { nom, prenom, email, password, telephone, role } = userData;
     
     try {
       // Vérifier si l'email existe déjà
@@ -30,12 +30,12 @@ class User {
       const hashedPassword = await bcrypt.hash(password, saltRounds);
 
       const query = `
-        INSERT INTO users (nom, prenom, email, password, role, telephone)
+        INSERT INTO users (nom, prenom, email, password, telephone, role)
         VALUES ($1, $2, $3, $4, $5, $6)
-        RETURNING id, nom, prenom, email, role, telephone, created_at, updated_at
+        RETURNING id, nom, prenom, email, telephone, role, created_at, updated_at
       `;
       
-      const values = [nom, prenom, email, hashedPassword, role, telephone];
+      const values = [nom, prenom, email, hashedPassword, telephone, role];
       const result = await pool.query(query, values);
       
       return new User(result.rows[0]);
