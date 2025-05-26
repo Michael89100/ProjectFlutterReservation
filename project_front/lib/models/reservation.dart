@@ -69,10 +69,10 @@ class Reservation {
       email: json['email'],
       nombreCouverts: json['nombreCouverts'] ?? json['guests'] ?? 0,
       dateReservation: json['dateReservation'] != null 
-          ? DateTime.parse(json['dateReservation']) 
-          : (json['date'] != null ? DateTime.parse(json['date']) : null),
+          ? _parseLocalDateTime(json['dateReservation']) 
+          : null,
       horaire: json['horaire'] != null 
-          ? DateTime.parse(json['horaire']) 
+          ? _parseLocalDateTime(json['horaire']) 
           : null,
       status: normalizeStatus(json['status']),
       commentaire: json['commentaire'] ?? json['comment'],
@@ -126,5 +126,16 @@ class Reservation {
       default:
         return status;
     }
+  }
+
+  /// Parse une date en tant qu'heure locale plutôt qu'UTC
+  static DateTime _parseLocalDateTime(String dateString) {
+    // Si la date n'a pas de suffixe de fuseau horaire, on la traite comme locale
+    if (!dateString.contains('Z') && !dateString.contains('+') && !dateString.contains('-', 10)) {
+      // Traiter la date comme locale directement sans conversion UTC
+      return DateTime.parse(dateString);
+    }
+    // Si elle a déjà un fuseau horaire, convertir en local
+    return DateTime.parse(dateString).toLocal();
   }
 } 

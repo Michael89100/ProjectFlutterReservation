@@ -221,6 +221,108 @@ class ReservationService implements Exception{
       throw Exception('Erreur lors de la récupération des créneaux');
     }
   }
+
+  /// Supprime une réservation (client uniquement)
+  Future<void> deleteReservation(String token, String reservationId) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/reservations/$reservationId'),
+        headers: _headersWithAuth(token),
+      );
+
+      print('Delete Reservation Response Status: ${response.statusCode}');
+      print('Delete Reservation Response Body: ${response.body}');
+
+      if (response.statusCode != 200) {
+        final errorData = jsonDecode(response.body) as Map<String, dynamic>;
+        throw ReservationException(
+          message: errorData['message'] ?? 'Erreur lors de la suppression de la réservation',
+          statusCode: response.statusCode,
+        );
+      }
+    } on SocketException {
+      throw ReservationException(
+        message: 'Erreur de connexion réseau. Vérifiez votre connexion internet.',
+        statusCode: 0,
+      );
+    } on FormatException {
+      throw ReservationException(
+        message: 'Erreur de format de réponse du serveur.',
+        statusCode: 0,
+      );
+    } catch (e) {
+      if (e is ReservationException) rethrow;
+      throw ReservationException(
+        message: 'Erreur inattendue: ${e.toString()}',
+        statusCode: 0,
+      );
+    }
+  }
+
+  /// Met à jour une réservation (client uniquement - horaire et nombre de couverts)
+  Future<Reservation> updateReservation(
+    String token, 
+    String reservationId, 
+    {DateTime? horaire, int? nombreCouverts, bool resetStatus = false}
+  ) async {
+    try {
+      final body = <String, dynamic>{};
+      if (horaire != null) {
+        // Envoyer la date avec le fuseau horaire local pour éviter les conversions
+        body['horaire'] = horaire.toIso8601String();
+        print('Date envoyée au serveur: ${body['horaire']}');
+      }
+      if (nombreCouverts != null) body['nombreCouverts'] = nombreCouverts;
+      if (resetStatus) body['status'] = 'en attente';
+
+      final response = await http.patch(
+        Uri.parse('$baseUrl/reservations/$reservationId'),
+        headers: _headersWithAuth(token),
+        body: jsonEncode(body),
+      );
+
+      print('Update Reservation Response Status: ${response.statusCode}');
+      print('Update Reservation Response Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+        
+        // Gérer différents formats de réponse
+        Map<String, dynamic> reservationJson;
+        if (responseData.containsKey('reservation')) {
+          reservationJson = responseData['reservation'];
+        } else if (responseData.containsKey('data')) {
+          reservationJson = responseData['data'];
+        } else {
+          reservationJson = responseData;
+        }
+
+        return Reservation.fromJson(reservationJson);
+      } else {
+        final errorData = jsonDecode(response.body) as Map<String, dynamic>;
+        throw ReservationException(
+          message: errorData['message'] ?? 'Erreur lors de la modification de la réservation',
+          statusCode: response.statusCode,
+        );
+      }
+    } on SocketException {
+      throw ReservationException(
+        message: 'Erreur de connexion réseau. Vérifiez votre connexion internet.',
+        statusCode: 0,
+      );
+    } on FormatException {
+      throw ReservationException(
+        message: 'Erreur de format de réponse du serveur.',
+        statusCode: 0,
+      );
+    } catch (e) {
+      if (e is ReservationException) rethrow;
+      throw ReservationException(
+        message: 'Erreur inattendue: ${e.toString()}',
+        statusCode: 0,
+      );
+    }
+  }
 }
 
 class ReservationException implements Exception {

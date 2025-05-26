@@ -40,8 +40,8 @@ class ReservationCard extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Colors.white,
-              Colors.grey[50]!,
+              Colors.grey[700]!,
+              Colors.grey[800]!,
             ],
           ),
         ),
@@ -60,12 +60,12 @@ class ReservationCard extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF2E3440).withOpacity(0.1),
+                            color: Colors.white.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: const Icon(
                             Icons.person,
-                            color: Color(0xFF2E3440),
+                            color: Colors.white,
                             size: 20,
                           ),
                         ),
@@ -79,14 +79,14 @@ class ReservationCard extends StatelessWidget {
                                 style: const TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFF2E3440),
+                                  color: Colors.white,
                                 ),
                               ),
                               Text(
                                 reservation.telephone,
                                 style: TextStyle(
                                   fontSize: 14,
-                                  color: Colors.grey[600],
+                                  color: Colors.grey[300],
                                 ),
                               ),
                             ],
@@ -105,9 +105,9 @@ class ReservationCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.grey[50],
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey[200]!),
+                  border: Border.all(color: Colors.grey[300]!),
                 ),
                 child: Column(
                   children: [
@@ -116,15 +116,13 @@ class ReservationCard extends StatelessWidget {
                       'Nombre de couverts',
                       '${reservation.nombreCouverts} personne${reservation.nombreCouverts > 1 ? 's' : ''}',
                     ),
-                    if (reservation.dateReservation != null) ...[
+                    if (reservation.horaire != null) ...[
                       const SizedBox(height: 12),
                       _buildInfoRow(
                         Icons.calendar_today,
                         'Date',
-                        '${reservation.dateReservation!.frenchDayName} ${DateFormat('dd/MM/yyyy').format(reservation.dateReservation!)}',
+                        '${reservation.horaire!.frenchDayName} ${DateFormat('dd/MM/yyyy').format(reservation.horaire!)}',
                       ),
-                    ],
-                    if (reservation.horaire != null) ...[
                       const SizedBox(height: 12),
                       _buildInfoRow(
                         Icons.access_time,
@@ -298,7 +296,7 @@ class ReservationCard extends StatelessWidget {
         Icon(
           icon,
           size: 16,
-          color: Colors.grey[600],
+          color: Colors.grey[300],
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -309,7 +307,7 @@ class ReservationCard extends StatelessWidget {
                 label,
                 style: TextStyle(
                   fontSize: 12,
-                  color: Colors.grey[600],
+                  color: Colors.grey[400],
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -318,7 +316,7 @@ class ReservationCard extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF2E3440),
+                  color: Colors.white,
                 ),
               ),
             ],

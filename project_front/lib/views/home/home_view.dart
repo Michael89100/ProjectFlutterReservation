@@ -38,6 +38,7 @@ class _HomeViewState extends State<HomeView> {
           SliverAppBar(
             expandedHeight: size.height * 0.45,
             pinned: true,
+            iconTheme: const IconThemeData(color: Colors.white),
             flexibleSpace: FlexibleSpaceBar(
               background: Stack(
                 fit: StackFit.expand,
@@ -975,13 +976,13 @@ class _HomeViewState extends State<HomeView> {
                       },
                     ),
                     
-                    // Section réservée aux serveurs
-                    if (user?.role == 'serveur') ...[
+                    // Section réservations
+                    if (user != null) ...[
                       const Divider(),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         child: Text(
-                          'GESTION',
+                          'RÉSERVATIONS',
                           style: TextStyle(
                             color: colorScheme.primary,
                             fontSize: 12,
@@ -989,16 +990,32 @@ class _HomeViewState extends State<HomeView> {
                           ),
                         ),
                       ),
-                      _buildDrawerItem(
-                        context,
-                        Icons.event_seat,
-                        'Gestion des réservations',
-                        () {
-                          Navigator.pop(context);
-                          Navigator.pushNamed(context, '/reservations');
-                        },
-                        isHighlighted: true,
-                      ),
+                      
+                      // Option pour les clients
+                      if (user.role == 'client')
+                        _buildDrawerItem(
+                          context,
+                          Icons.event_note,
+                          'Mes réservations',
+                          () {
+                            Navigator.pop(context);
+                            Navigator.pushNamed(context, '/my-reservations');
+                          },
+                          isHighlighted: true,
+                        ),
+                      
+                      // Option pour les serveurs
+                      if (user.role == 'serveur')
+                        _buildDrawerItem(
+                          context,
+                          Icons.event_seat,
+                          'Gestion des réservations',
+                          () {
+                            Navigator.pop(context);
+                            Navigator.pushNamed(context, '/reservations');
+                          },
+                          isHighlighted: true,
+                        ),
                     ],
                     
                     const Divider(),

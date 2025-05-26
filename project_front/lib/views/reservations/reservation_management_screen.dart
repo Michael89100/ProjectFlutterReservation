@@ -25,7 +25,7 @@ class _ReservationManagementScreenState extends State<ReservationManagementScree
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Colors.grey[900],
       appBar: AppBar(
         title: const Text(
           'Gestion des Réservations',
@@ -36,6 +36,7 @@ class _ReservationManagementScreenState extends State<ReservationManagementScree
         ),
         backgroundColor: const Color(0xFF2E3440),
         elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           Consumer<ReservationManagementViewModel>(
             builder: (context, viewModel, child) {
