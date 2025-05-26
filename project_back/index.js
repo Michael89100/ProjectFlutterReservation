@@ -15,6 +15,7 @@ const { specs, swaggerUi, swaggerOptions } = require('./config/swagger');
 
 // Import des routes
 const authRoutes = require('./routes/auth');
+const menuRoutes = require('./routes/menu');
 
 // Initialisation de l'application Express
 const app = express();
@@ -50,6 +51,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, swaggerOptions));
 
 // Routes principales
 app.use('/api/auth', authRoutes);
+app.use('/api/menu', menuRoutes);
 
 // Route de base
 app.get('/', (req, res) => {
@@ -60,6 +62,7 @@ app.get('/', (req, res) => {
     documentation: '/api-docs',
     endpoints: {
       auth: '/api/auth',
+      menu: '/api/menu',
       swagger: '/api-docs'
     }
   });
