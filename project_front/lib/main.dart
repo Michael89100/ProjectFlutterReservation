@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'viewmodels/auth_viewmodel.dart';
+import 'viewmodels/menu_viewmodel.dart';
+import 'viewmodels/client_reservations_viewmodel.dart';
 import 'views/auth/login_view.dart';
+import 'views/auth/register_view.dart';
 import 'views/home/home_view.dart';
+import 'views/menu/menu_view.dart';
+import 'views/reservations/protected_reservation_management_screen.dart';
+import 'views/reservations/client_reservations_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -16,10 +23,21 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthViewModel()),
+        ChangeNotifierProvider(create: (_) => MenuViewModel()),
+        ChangeNotifierProvider(create: (_) => ClientReservationsViewModel()),
       ],
       child: MaterialApp(
         title: 'Système de Réservation',
         debugShowCheckedModeBanner: false,
+        locale: const Locale('fr', 'FR'),
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [
+          Locale('fr', 'FR'),
+        ],
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
             seedColor: const Color(0xFF2196F3),
@@ -43,10 +61,14 @@ class MyApp extends StatelessWidget {
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           ),
         ),
-        home: const AuthWrapper(),
+        home: const HomeView(),
         routes: {
           '/login': (context) => const LoginView(),
+          '/register': (context) => const RegisterView(),
           '/home': (context) => const HomeView(),
+          '/menu': (context) => const MenuView(),
+          '/reservations': (context) => const ProtectedReservationManagementScreen(),
+          '/my-reservations': (context) => const ClientReservationsScreen(),
         },
       ),
     );

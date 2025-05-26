@@ -102,9 +102,11 @@ CREATE DATABASE reservation_db;
 
 3. **Initialisez les tables :**
 ```bash
-# Depuis le dossier project_back
+# Depuis le dossier project_back pour windows
 psql -U postgres -d reservation_db -f scripts/init-db.sql
-psql -d reservation_db -f scripts/init-db.sql
+
+# Depuis le dossier project_back pour mac/linux
+ 
 ```
 
 Ou manuellement :
@@ -112,6 +114,18 @@ Ou manuellement :
 psql -U postgres -d reservation_db
 ```
 Puis copiez-collez le contenu du fichier `scripts/init-db.sql`.
+
+4. **Peuplez les données (menu et utilisateurs) :**
+```bash
+# Depuis le dossier project_back
+npm run fixtures
+```
+
+Cette commande va peupler :
+- **Table `menu`** avec 12 plats de démonstration (entrées, plats, desserts, boissons)
+- **Table `users`** avec 2 utilisateurs par défaut :
+  - **Client** : `client@restaurant.com` / `client123`
+  - **Serveur** : `serveur@restaurant.com` / `serveur123`
 
 ## 🚀 Démarrage
 
@@ -140,6 +154,13 @@ Une fois le serveur démarré, accédez à la documentation Swagger interactive 
 - `POST /api/auth/login` - Connexion d'un utilisateur
 - `GET /api/auth/profile` - Profil de l'utilisateur connecté (authentifié)
 - `GET /api/auth/verify` - Vérification du token JWT (authentifié)
+
+### Menu
+- `GET /api/menu` - Liste des plats disponibles
+- `GET /api/menu/:id` - Détails d'un plat
+- `POST /api/menu` - Ajouter un plat (serveur uniquement)
+- `PUT /api/menu/:id` - Modifier un plat (serveur uniquement)
+- `DELETE /api/menu/:id` - Supprimer un plat (serveur uniquement)
 
 ### Utilitaires
 - `GET /` - Informations sur l'API
@@ -172,11 +193,44 @@ curl -X POST http://localhost:3000/api/auth/login \
   }'
 ```
 
+**Ou utilisez les comptes de démonstration :**
+
+```bash
+# Connexion client
+curl -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "client@restaurant.com",
+    "password": "client123"
+  }'
+
+# Connexion serveur
+curl -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "serveur@restaurant.com",
+    "password": "serveur123"
+  }'
+```
+
 ### 3. Accès au profil (avec token)
 
 ```bash
 curl -X GET http://localhost:3000/api/auth/profile \
   -H "Authorization: Bearer VOTRE_TOKEN_JWT"
+```
+
+### 4. Consultation du menu
+
+```bash
+# Liste complète du menu
+curl -X GET http://localhost:3000/api/menu
+
+# Filtrer par catégorie
+curl -X GET "http://localhost:3000/api/menu?categorie=entree"
+
+# Détails d'un plat spécifique
+curl -X GET http://localhost:3000/api/menu/ID_DU_PLAT
 ```
 
 ## 🔒 Sécurité
@@ -216,7 +270,8 @@ project_back/
 ├── routes/
 │   └── auth.js             # Routes d'authentification
 ├── scripts/
-│   └── init-db.sql         # Script d'initialisation DB
+│   ├── init-db.sql         # Script d'initialisation DB
+│   └── fixtures.js         # Script de peuplement des données
 ├── config.env              # Variables d'environnement
 ├── index.js                # Point d'entrée
 ├── package.json            # Dépendances

@@ -25,6 +25,9 @@ const { authenticateToken } = require('../middleware/auth');
  *           type: string
  *           format: email
  *           description: Adresse email de l'utilisateur
+ *         telephone:
+ *           type: string
+ *           description: Numéro de téléphone de l'utilisateur
  *         role:
  *           type: string
  *           enum: [client, serveur]
@@ -45,6 +48,7 @@ const { authenticateToken } = require('../middleware/auth');
  *         - prenom
  *         - email
  *         - password
+ *         - telephone
  *         - role
  *       properties:
  *         nom:
@@ -61,6 +65,9 @@ const { authenticateToken } = require('../middleware/auth');
  *           type: string
  *           format: email
  *           description: Adresse email
+ *         telephone:
+ *           type: string
+ *           description: Numéro de téléphone
  *         password:
  *           type: string
  *           minLength: 8
@@ -145,6 +152,7 @@ const { authenticateToken } = require('../middleware/auth');
  *             nom: "Dupont"
  *             prenom: "Jean"
  *             email: "jean.dupont@example.com"
+ *             telephone: "06 06 06 06 06"
  *             password: "MonMotDePasse123!"
  *             role: "client"
  *     responses:

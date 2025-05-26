@@ -5,7 +5,7 @@ class AuthController {
   // Inscription d'un nouvel utilisateur
   static async register(req, res) {
     try {
-      const { nom, prenom, email, password, role } = req.body;
+      const { nom, prenom, email, password, telephone, role } = req.body;
 
       // Créer l'utilisateur
       const user = await User.create({
@@ -13,6 +13,7 @@ class AuthController {
         prenom,
         email,
         password,
+        telephone,
         role: role || 'client'
       });
 

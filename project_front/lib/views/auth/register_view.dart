@@ -16,6 +16,7 @@ class _RegisterViewState extends State<RegisterView> {
   final _nomController = TextEditingController();
   final _prenomController = TextEditingController();
   final _emailController = TextEditingController();
+  final _telephoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool _obscurePassword = true;
@@ -26,6 +27,7 @@ class _RegisterViewState extends State<RegisterView> {
     _nomController.dispose();
     _prenomController.dispose();
     _emailController.dispose();
+    _telephoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -41,6 +43,7 @@ class _RegisterViewState extends State<RegisterView> {
       _prenomController.text.trim(),
       _emailController.text.trim(),
       _passwordController.text,
+      _telephoneController.text.trim(),
     );
 
     if (success && mounted) {
@@ -170,6 +173,28 @@ class _RegisterViewState extends State<RegisterView> {
                         }
                         if (!EmailValidator.validate(value)) {
                           return 'Veuillez entrer un email valide';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    TextFormField(
+                      controller: _telephoneController,
+                      keyboardType: TextInputType.phone,
+                      decoration: const InputDecoration(
+                        labelText: 'Téléphone',
+                        hintText: 'Entrez votre numéro de téléphone',
+                        prefixIcon: Icon(Icons.phone_outlined),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Veuillez entrer votre numéro de téléphone';
+                        }
+                        // Validation basique du format téléphone français
+                        final phoneRegex = RegExp(r'^(?:(?:\+|00)33|0)\s*[1-9](?:[\s.-]*\d{2}){4}$');
+                        if (!phoneRegex.hasMatch(value.trim().replaceAll(RegExp(r'[\s.-]'), ''))) {
+                          return 'Veuillez entrer un numéro de téléphone valide';
                         }
                         return null;
                       },
