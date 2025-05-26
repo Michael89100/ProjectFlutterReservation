@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/menu_viewmodel.dart';
 import '../components/menu_card.dart';
+import '../../services/reservation_service.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -315,6 +316,21 @@ class _HomeViewState extends State<HomeView> {
                               }
                             },
                           ),
+                          if (authViewModel.isAuthenticated) ...[
+                            const SizedBox(height: 12),
+                            _buildActionButton(
+                              context,
+                              'Se déconnecter',
+                              Icons.logout,
+                              colorScheme.error,
+                              () async {
+                                await authViewModel.logout();
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Déconnecté avec succès'), backgroundColor: Colors.red),
+                                );
+                              },
+                            ),
+                          ],
                         ],
                       );
                     },
@@ -515,6 +531,12 @@ class _HomeViewState extends State<HomeView> {
     DateTime selectedDate = DateTime.now();
     TimeOfDay selectedTime = TimeOfDay.now();
     int numberOfGuests = 2;
+    final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
+    // Champs pour non connecté
+    final TextEditingController nomController = TextEditingController();
+    final TextEditingController prenomController = TextEditingController();
+    final TextEditingController emailController = TextEditingController();
+    final TextEditingController telephoneController = TextEditingController();
 
     showModalBottomSheet(
       context: context,
@@ -702,18 +724,88 @@ class _HomeViewState extends State<HomeView> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 24),
+
+                      // Si non connecté, afficher les champs d'identité
+                      if (!authViewModel.isAuthenticated) ...[
+                        Text('Nom', style: Theme.of(context).textTheme.titleMedium),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: nomController,
+                          decoration: const InputDecoration(hintText: 'Votre nom'),
+                        ),
+                        const SizedBox(height: 12),
+                        Text('Prénom', style: Theme.of(context).textTheme.titleMedium),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: prenomController,
+                          decoration: const InputDecoration(hintText: 'Votre prénom'),
+                        ),
+                        const SizedBox(height: 12),
+                        Text('Email', style: Theme.of(context).textTheme.titleMedium),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: emailController,
+                          decoration: const InputDecoration(hintText: 'Votre email'),
+                          keyboardType: TextInputType.emailAddress,
+                        ),
+                        const SizedBox(height: 12),
+                        Text('Téléphone', style: Theme.of(context).textTheme.titleMedium),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: telephoneController,
+                          decoration: const InputDecoration(hintText: 'Votre téléphone'),
+                          keyboardType: TextInputType.phone,
+                        ),
+                        const SizedBox(height: 24),
+                      ],
 
                       // Bouton de confirmation
                       FilledButton.icon(
-                        onPressed: () {
-                          // TODO: Implémenter la logique de réservation
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Réservation enregistrée !'),
-                            ),
-                          );
-                          Navigator.pop(context);
+                        onPressed: () async {
+                          final String heure = selectedTime.hour.toString().padLeft(2, '0') + ':' + selectedTime.minute.toString().padLeft(2, '0');
+                          bool reservationSuccess = false;
+                          if (authViewModel.isAuthenticated) {
+                            reservationSuccess = await ReservationService().createReservation(
+                              token: authViewModel.token,
+                              userId: authViewModel.currentUser?.id,
+                              nombreCouverts: numberOfGuests,
+                              date: selectedDate,
+                              heure: heure,
+                            );
+                          } else {
+                            if (nomController.text.isEmpty || prenomController.text.isEmpty || emailController.text.isEmpty || telephoneController.text.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Veuillez remplir tous les champs.'), backgroundColor: Colors.red),
+                              );
+                              return;
+                            }
+                            reservationSuccess = await ReservationService().createReservation(
+                              nombreCouverts: numberOfGuests,
+                              date: selectedDate,
+                              heure: heure,
+                              nom: nomController.text,
+                              prenom: prenomController.text,
+                              email: emailController.text,
+                              telephone: telephoneController.text,
+                            );
+                          }
+                          if (reservationSuccess) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Réservation enregistrée !'),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                            Navigator.pop(context);
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Erreur lors de la réservation'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
                         },
                         icon: const Icon(Icons.check),
                         label: const Text('Confirmer la réservation'),
