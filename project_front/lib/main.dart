@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'viewmodels/auth_viewmodel.dart';
+import 'viewmodels/menu_viewmodel.dart';
 import 'views/auth/login_view.dart';
+import 'views/auth/register_view.dart';
 import 'views/home/home_view.dart';
+import 'views/menu/menu_view.dart';
 
 void main() {
   runApp(const MyApp());
@@ -16,6 +19,7 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthViewModel()),
+        ChangeNotifierProvider(create: (_) => MenuViewModel()),
       ],
       child: MaterialApp(
         title: 'Système de Réservation',
@@ -46,7 +50,9 @@ class MyApp extends StatelessWidget {
         home: const AuthWrapper(),
         routes: {
           '/login': (context) => const LoginView(),
+          '/register': (context) => const RegisterView(),
           '/home': (context) => const HomeView(),
+          '/menu': (context) => const MenuView(),
         },
       ),
     );
