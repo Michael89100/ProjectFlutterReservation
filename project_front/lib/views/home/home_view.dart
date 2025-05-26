@@ -303,17 +303,11 @@ class _HomeViewState extends State<HomeView> {
                           const SizedBox(height: 12),
                           _buildActionButton(
                             context,
-                            authViewModel.isAuthenticated 
-                                ? 'Réserver une table' 
-                                : 'Se connecter pour réserver',
+                            'Réserver une table',
                             Icons.event_seat,
                             colorScheme.secondary,
                             () {
-                              if (authViewModel.isAuthenticated) {
-                                _showReservationForm(context);
-                              } else {
-                                Navigator.of(context).pushNamed('/login');
-                              }
+                              _showReservationForm(context);
                             },
                           ),
                           if (authViewModel.isAuthenticated) ...[

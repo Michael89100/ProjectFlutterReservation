@@ -38,16 +38,16 @@ class ReservationService {
         'password': 'Temp${DateTime.now().millisecondsSinceEpoch}', // mot de passe temporaire
       };
     }
-    print('DEBUG ReservationService: url=' + url.toString());
-    print('DEBUG ReservationService: headers=' + headers.toString());
-    print('DEBUG ReservationService: body=' + body.toString());
+    http.get(
+      Uri.parse('$baseUrl/available-slots'),
+      headers: headers,
+    );
     final response = await http.post(
       url,
       headers: headers,
       body: jsonEncode(body),
     );
-    print('DEBUG ReservationService: statusCode=${response.statusCode}');
-    print('DEBUG ReservationService: responseBody=${response.body}');
+
     if (response.statusCode == 201) {
       return true;
     } else {
