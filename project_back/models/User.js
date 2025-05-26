@@ -6,6 +6,7 @@ class User {
     this.id = data.id;
     this.nom = data.nom;
     this.prenom = data.prenom;
+    this.telephone = data.telephone;
     this.email = data.email;
     this.password = data.password;
     this.role = data.role;
@@ -15,7 +16,7 @@ class User {
 
   // Créer un nouvel utilisateur
   static async create(userData) {
-    const { nom, prenom, email, password, role } = userData;
+    const { nom, prenom, email, password, role, telephone } = userData;
     
     try {
       // Vérifier si l'email existe déjà
@@ -29,12 +30,12 @@ class User {
       const hashedPassword = await bcrypt.hash(password, saltRounds);
 
       const query = `
-        INSERT INTO users (nom, prenom, email, password, role)
-        VALUES ($1, $2, $3, $4, $5)
-        RETURNING id, nom, prenom, email, role, created_at, updated_at
+        INSERT INTO users (nom, prenom, email, password, role, telephone)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        RETURNING id, nom, prenom, email, role, telephone, created_at, updated_at
       `;
       
-      const values = [nom, prenom, email, hashedPassword, role];
+      const values = [nom, prenom, email, hashedPassword, role, telephone];
       const result = await pool.query(query, values);
       
       return new User(result.rows[0]);
@@ -97,7 +98,7 @@ class User {
   // Obtenir tous les utilisateurs (pour l'administration)
   static async findAll() {
     try {
-      const query = 'SELECT id, nom, prenom, email, role, created_at, updated_at FROM users ORDER BY created_at DESC';
+      const query = 'SELECT id, nom, prenom, email, role, telephone, created_at, updated_at FROM users ORDER BY created_at DESC';
       const result = await pool.query(query);
       
       return result.rows.map(row => new User(row));
