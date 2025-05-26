@@ -814,7 +814,7 @@ class _HomeViewState extends State<HomeView> {
                           final String heure = selectedSlot!;
                           bool reservationSuccess = false;
                           if (authViewModel.isAuthenticated) {
-                            reservationSuccess = await ReservationService().createReservation(
+                            reservationSuccess = await ReservationService.instance.createReservation(
                               token: authViewModel.token,
                               userId: authViewModel.currentUser?.id,
                               nombreCouverts: numberOfGuests,
@@ -828,7 +828,7 @@ class _HomeViewState extends State<HomeView> {
                               );
                               return;
                             }
-                            reservationSuccess = await ReservationService().createReservation(
+                            reservationSuccess = await ReservationService.instance.createReservation(
                               nombreCouverts: numberOfGuests,
                               date: selectedDate,
                               heure: heure,
