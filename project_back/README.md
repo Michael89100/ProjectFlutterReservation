@@ -112,6 +112,12 @@ psql -U postgres -d reservation_db
 ```
 Puis copiez-collez le contenu du fichier `scripts/init-db.sql`.
 
+4. **Initialisez le menu :**
+```bash
+# Depuis le dossier project_back
+npm run populate-menu
+```
+
 ## 🚀 Démarrage
 
 ### Mode développement (avec rechargement automatique)

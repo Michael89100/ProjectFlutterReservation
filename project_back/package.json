@@ -7,8 +7,6 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "test-server": "node index-test.js",
-    "dev-test": "nodemon index-test.js",
     "populate-menu": "node scripts/populate-menu.js"
   },
   "keywords": ["api", "reservation", "nodejs", "express"],
