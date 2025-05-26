@@ -43,6 +43,14 @@ const registerSchema = Joi.object({
       'string.pattern.base': 'Le mot de passe doit contenir au moins une majuscule, une minuscule, un chiffre et un caractère spécial'
     }),
   
+  telephone: Joi.string()
+    .pattern(/^(?:\+33\s?[1-9](?:[\s.-]?\d{2}){4}|0[1-9](?:[\s.-]?\d{2}){4})$/)
+    .allow(null, '')
+    .optional()
+    .messages({
+      'string.pattern.base': 'Le numéro de téléphone doit être un numéro français valide (ex: 06 12 34 56 78, 0612345678, +33 6 12 34 56 78)'
+    }),
+  
   role: Joi.string()
     .valid('client', 'serveur')
     .required()
