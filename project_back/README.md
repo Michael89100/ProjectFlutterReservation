@@ -104,6 +104,7 @@ CREATE DATABASE reservation_db;
 ```bash
 # Depuis le dossier project_back
 psql -U postgres -d reservation_db -f scripts/init-db.sql
+psql -d reservation_db -f scripts/init-db.sql
 ```
 
 Ou manuellement :
