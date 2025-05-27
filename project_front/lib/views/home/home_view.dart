@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/menu_viewmodel.dart';
 import '../components/menu_card.dart';
@@ -566,6 +567,7 @@ class _HomeViewState extends State<HomeView> {
     DateTime selectedDate = DateTime.now();
     String? selectedSlot; // Ajout pour le créneau sélectionné
     int numberOfGuests = 2;
+    bool isLoading = false; // État de chargement local
     final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
     // Champs pour non connecté
     final TextEditingController nomController = TextEditingController();
@@ -809,66 +811,91 @@ class _HomeViewState extends State<HomeView> {
                         const SizedBox(height: 24),
                       ],
 
-                      // Bouton de confirmation
-                      FilledButton.icon(
-                        onPressed: () async {
-                          if (selectedSlot == null) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Veuillez sélectionner un créneau.'), backgroundColor: Colors.red),
-                            );
-                            return;
-                          }
-                          final String heure = selectedSlot!;
-                          bool reservationSuccess = false;
-                          if (authViewModel.isAuthenticated) {
-                            reservationSuccess = await ReservationService.instance.createReservation(
-                              token: authViewModel.token,
-                              userId: authViewModel.currentUser?.id,
-                              nombreCouverts: numberOfGuests,
-                              date: selectedDate,
-                              heure: heure,
-                            );
-                          } else {
-                            if (nomController.text.isEmpty || prenomController.text.isEmpty || emailController.text.isEmpty || telephoneController.text.isEmpty) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Veuillez remplir tous les champs.'), backgroundColor: Colors.red),
-                              );
-                              return;
-                            }
-                            reservationSuccess = await ReservationService.instance.createReservation(
-                              nombreCouverts: numberOfGuests,
-                              date: selectedDate,
-                              heure: heure,
-                              nom: nomController.text,
-                              prenom: prenomController.text,
-                              email: emailController.text,
-                              telephone: telephoneController.text,
-                            );
-                          }
-                          if (reservationSuccess) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Réservation enregistrée !'),
-                                backgroundColor: Colors.green,
+                      // Bouton de confirmation avec loader
+                      StatefulBuilder(
+                        builder: (context, setState) {
+                          return SizedBox(
+                            width: double.infinity,
+                            height: 56,
+                            child: FilledButton.icon(
+                              onPressed: isLoading ? null : () async {
+                                if (selectedSlot == null) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Veuillez sélectionner un créneau.'), backgroundColor: Colors.red),
+                                  );
+                                  return;
+                                }
+                                
+                                setState(() {
+                                  isLoading = true;
+                                });
+                                
+                                try {
+                                  final String heure = selectedSlot!;
+                                  bool reservationSuccess = false;
+                                  
+                                  if (authViewModel.isAuthenticated) {
+                                    reservationSuccess = await ReservationService.instance.createReservation(
+                                      token: authViewModel.token,
+                                      userId: authViewModel.currentUser?.id,
+                                      nombreCouverts: numberOfGuests,
+                                      date: selectedDate,
+                                      heure: heure,
+                                    );
+                                  } else {
+                                    if (nomController.text.isEmpty || prenomController.text.isEmpty || emailController.text.isEmpty || telephoneController.text.isEmpty) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('Veuillez remplir tous les champs.'), backgroundColor: Colors.red),
+                                      );
+                                      return;
+                                    }
+                                    reservationSuccess = await ReservationService.instance.createReservation(
+                                      nombreCouverts: numberOfGuests,
+                                      date: selectedDate,
+                                      heure: heure,
+                                      nom: nomController.text,
+                                      prenom: prenomController.text,
+                                      email: emailController.text,
+                                      telephone: telephoneController.text,
+                                    );
+                                  }
+                                  
+                                  if (reservationSuccess) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Réservation enregistrée !'),
+                                        backgroundColor: Colors.green,
+                                      ),
+                                    );
+                                    Navigator.pop(context);
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Erreur lors de la réservation'),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
+                                } finally {
+                                  setState(() {
+                                    isLoading = false;
+                                  });
+                                }
+                              },
+                              icon: isLoading ? null : const Icon(Icons.check),
+                              label: isLoading 
+                                  ? const SpinKitThreeBounce(
+                                      color: Colors.white,
+                                      size: 20,
+                                    )
+                                  : const Text('Confirmer la réservation'),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: colorScheme.primary,
+                                foregroundColor: colorScheme.onPrimary,
                               ),
-                            );
-                            Navigator.pop(context);
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Erreur lors de la réservation'),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                          }
+                            ),
+                          );
                         },
-                        icon: const Icon(Icons.check),
-                        label: const Text('Confirmer la réservation'),
-                        style: FilledButton.styleFrom(
-                          minimumSize: const Size(double.infinity, 56),
-                          backgroundColor: colorScheme.primary,
-                          foregroundColor: colorScheme.onPrimary,
-                        ),
                       ),
                     ],
                   ),

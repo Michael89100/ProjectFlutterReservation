@@ -81,15 +81,30 @@ class ReservationService {
         int.parse(timeParts[1]),
       );
 
-      final body = {
-        'nombreCouverts': nombreCouverts,
-        'horaire': reservationDateTime.toIso8601String(),
-        if (userId != null) 'userId': userId,
-        if (nom != null) 'nom': nom,
-        if (prenom != null) 'prenom': prenom,
-        if (email != null) 'email': email,
-        if (telephone != null) 'telephone': telephone,
-      };
+      Map<String, dynamic> body;
+      
+      // Si c'est une réservation d'invité (avec nom, prenom, email, telephone)
+      if (nom != null && prenom != null && email != null && telephone != null) {
+        body = {
+          'nombreCouverts': nombreCouverts,
+          'horaire': reservationDateTime.toIso8601String(),
+          'user': {
+            'nom': nom,
+            'prenom': prenom,
+            'email': email,
+            'telephone': telephone,
+            'password': 'temp123', // Mot de passe temporaire pour la création de compte
+            'role': 'client',
+          },
+        };
+      } else {
+        // Si c'est une réservation d'utilisateur connecté
+        body = {
+          'nombreCouverts': nombreCouverts,
+          'horaire': reservationDateTime.toIso8601String(),
+          if (userId != null) 'userId': userId,
+        };
+      }
 
       final headers = token != null ? _headersWithAuth(token) : _headers;
 
